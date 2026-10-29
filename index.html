@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Conheça o Rossi Barbershop e agende seu horário.">
+  <title>Rossi Barbershop | Agendamento</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/script.js" defer></script>
+</head>
+
+<body>
+  <header class="cabecalho">
+    <a href="#" class="logo">
+      <img src="img/logo.jpg" alt="Logo Rossi Barbershop" class="logo-imagem" width="44" height="44">
+      <span class="logo-texto">
+        ROSSI
+        <span>BARBERSHOP</span>
+      </span>
+    </a>
+    <nav>
+      <a href="#servicos">Serviços</a>
+      <a href="#sobre">Sobre</a>
+      <a href="#servicos" class="botao">Agendar horário</a>
+      <!-- Acesso do Barbeiro ocultado no menu para publicação
+      <a href="admin.html" class="botao-link-admin" title="Acessar o Painel Administrativo do Barbeiro">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+        </svg>
+        Área do Barbeiro
+      </a>
+      -->
+    </nav>
+  </header>
+
+  <main>
+    <section class="destaque">
+      <div class="destaque-conteudo">
+        <p class="etiqueta">SANTA RITA • SANTA BÁRBARA D'OESTE</p>
+        <h1>Excelência em cada detalhe.</h1>
+        <p class="destaque-descricao">Onde estilo e elegância se encontram. Escolha o serviço, o dia e o horário e garanta o seu lugar na cadeira.</p>
+        <div class="destaque-botoes">
+          <a href="#servicos" class="botao">Agendar meu horário</a>
+          <a href="#servicos" class="link-ver-servicos">Ver serviços</a>
+        </div>
+      </div>
+      <div class="destaque-imagem-container" aria-hidden="true">
+        <img src="img/hero-corte.png" alt="Corte e acabamento profissional na Rossi Barbershop" class="destaque-imagem-bleed">
+        <div class="destaque-imagem-gradiente"></div>
+      </div>
+    </section>
+
+    <section id="servicos" class="secao">
+      <p class="etiqueta">PASSO 1</p>
+      <h2>Nossos serviços</h2>
+      <p>Escolha o serviço para começar o agendamento.</p>
+      <div id="lista-servicos" class="servicos-lista"></div>
+
+    </section>
+
+    <section id="painel-agendamento" class="secao painel-agendamento" hidden>
+      <div class="grid-agendamento">
+        <!-- Coluna Esquerda: Resumo do Agendamento (Fixo e Proporcional) -->
+        <aside class="coluna-resumo">
+          <div id="resumo-servico" class="resumo-card">
+            <div class="resumo-cabecalho">
+              <span class="etiqueta">SEU AGENDAMENTO</span>
+              <a href="#servicos" class="link-trocar-servico" id="btn-trocar-servico"
+                title="Escolher outro serviço">Trocar</a>
+            </div>
+
+            <h3 id="resumo-nome" class="resumo-nome-servico"></h3>
+
+            <div class="resumo-detalhes-linha">
+              <span class="resumo-duracao-badge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span id="resumo-duracao"></span>
+              </span>
+            </div>
+
+            <div class="resumo-divisor"></div>
+
+            <div class="resumo-preco-container">
+              <span class="resumo-preco-label">Valor do serviço</span>
+              <strong id="resumo-preco" class="resumo-preco-valor"></strong>
+            </div>
+
+            <!-- Previsão do horário selecionado atualizado em tempo real -->
+            <div id="resumo-data-hora-lateral" class="resumo-data-hora-lateral" hidden>
+              <div class="resumo-divisor"></div>
+              <span class="resumo-preco-label">Data e Horário</span>
+              <strong id="resumo-data-hora-texto" class="resumo-data-hora-texto"></strong>
+            </div>
+
+            <button id="continuar-agendamento" class="botao botao-continuar-resumo" type="button">
+              CONTINUAR &rarr;
+            </button>
+
+            <p id="mensagem-selecao" class="mensagem-selecao" role="status"></p>
+
+            <div class="resumo-barbearia-info">
+              <div class="info-item">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--dourado)" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+                <span>Santa Rita • Santa Bárbara d'Oeste</span>
+              </div>
+              <div class="info-item">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--dourado)" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                <span>Ter a Sáb conforme horários</span>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Coluna Direita: Etapas do Agendamento (Data/Hora -> Dados -> Revisão) -->
+        <div class="coluna-etapas">
+          <!-- Etapa 1: Data e Horário -->
+          <div id="etapa-agendamento" class="etapa-card etapa-agendamento">
+            <span class="etiqueta">PRÓXIMA ETAPA</span>
+            <h2>Escolha sua data e horário</h2>
+            <p class="texto-agendamento">
+              Selecione o melhor momento para o seu atendimento.
+            </p>
+
+            <div class="dica-horarios-agendamento">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--dourado)" stroke-width="2.2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>
+                <strong>Horários:</strong> Terça a Quinta (08:45 às 12:00 e 13:30 às 19:30) • Sexta (08:00 às 12:00 e
+                13:30 às 19:30) • Sábado (08:00 às 12:00 e 12:45 às 15:00) • <em style="color: #ff8a80;">Domingos e
+                  Segundas fechado</em>
+              </span>
+            </div>
+
+            <div class="campo-data">
+              <label for="data-agendamento">Data do atendimento</label>
+              <input type="date" id="data-agendamento" name="data-agendamento" required />
+              <small class="dica-campo">Agendamentos disponíveis para até 4 meses à frente.</small>
+            </div>
+
+            <div class="area-horarios">
+              <h3>Horários disponíveis</h3>
+              <p id="orientacao-horarios" role="status">
+                Selecione uma data para consultar os horários de demonstração.
+              </p>
+
+              <div id="lista-horarios" class="lista-horarios"></div>
+            </div>
+
+            <div id="resumo-horario" class="resumo-horario" hidden>
+              <p>Horário selecionado</p>
+              <strong id="horario-escolhido"></strong>
+              <button id="confirmar-horario" class="botao" type="button">
+                CONTINUAR PARA SEUS DADOS &rarr;
+              </button>
+              <p id="mensagem-horario" role="status"></p>
+            </div>
+          </div>
+
+          <!-- Etapa 2: Dados do Cliente -->
+          <div id="etapa-cliente" class="etapa-card etapa-cliente" hidden>
+            <span class="etiqueta">QUASE LÁ</span>
+            <h2>Seus dados</h2>
+            <p class="texto-cliente">
+              Informe seus dados para preparar seu agendamento.
+            </p>
+
+            <form id="form-cliente">
+              <div class="campo-cliente">
+                <label for="nome-cliente">Nome completo *</label>
+                <input type="text" id="nome-cliente" name="nome" placeholder="Digite seu nome (somente letras)"
+                  autocomplete="name" minlength="3" maxlength="50" pattern="[A-Za-zÀ-ÖØ-öø-ÿ\s]+"
+                  title="Digite apenas letras e espaços (sem números ou caracteres especiais), até 50 caracteres."
+                  required />
+                <small class="dica-campo">Apenas letras e espaços (máximo de 50 caracteres).</small>
+              </div>
+
+              <div class="campo-cliente">
+                <label for="telefone-cliente">Celular com DDD *</label>
+                <input type="tel" id="telefone-cliente" name="telefone" placeholder="(11) 99999-9999" autocomplete="tel"
+                  inputmode="numeric" maxlength="15" pattern="\(\d{2}\)\s\d{4,5}-\d{4}"
+                  title="Informe o celular com DDD no formato (XX) 9XXXX-XXXX" required />
+              </div>
+
+              <p class="aviso-privacidade">
+                Seus dados serão utilizados para registrar e garantir o seu horário na barbearia.
+              </p>
+
+              <div class="botoes-acao-etapa">
+                <button id="btn-voltar-horarios" class="botao botao-voltar" type="button">
+                  &larr; Alterar horário
+                </button>
+                <button class="botao" type="submit">
+                  REVISAR AGENDAMENTO &rarr;
+                </button>
+              </div>
+
+              <p id="erro-formulario" class="mensagem-formulario" role="alert"></p>
+            </form>
+          </div>
+
+          <!-- Etapa 3: Resumo e Confirmação -->
+          <div id="etapa-revisao" class="etapa-card etapa-revisao" hidden>
+            <span class="etiqueta">CONFIRA SEUS DADOS</span>
+            <h2>Resumo do agendamento</h2>
+
+            <div class="revisao-detalhes">
+              <p><span>Cliente</span><strong id="revisao-nome"></strong></p>
+              <p><span>Celular</span><strong id="revisao-telefone"></strong></p>
+              <p><span>Serviço</span><strong id="revisao-servico"></strong></p>
+              <p><span>Data</span><strong id="revisao-data"></strong></p>
+              <p><span>Horário</span><strong id="revisao-horario"></strong></p>
+              <p><span>Duração</span><strong id="revisao-duracao"></strong></p>
+              <p><span>Valor</span><strong id="revisao-preco"></strong></p>
+            </div>
+
+            <div class="botoes-acao-etapa" style="margin-top: 24px;">
+              <button id="btn-voltar-dados" class="botao botao-voltar" type="button">
+                &larr; Alterar dados
+              </button>
+              <button id="btn-confirmar-agendamento" class="botao" type="button">
+                ENVIAR SOLICITAÇÃO DE AGENDAMENTO
+              </button>
+            </div>
+
+            <p id="status-agendamento" class="mensagem-status" role="status" aria-live="polite"
+              style="margin-top: 15px; text-align: center; font-weight: bold;"></p>
+          </div>
+
+          <!-- Etapa 4: Solicitação Enviada (Aguardando Aprovação do Barbeiro) -->
+          <div id="etapa-sucesso" class="etapa-card etapa-sucesso" hidden>
+            <div class="sucesso-cabecalho">
+              <div class="sucesso-icone-circulo" style="border-color: #f7d584; background: rgba(247, 213, 132, 0.1);">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#f7d584" stroke-width="2.4"
+                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </div>
+              <span class="etiqueta" style="color: #f7d584;">SOLICITAÇÃO RECEBIDA</span>
+              <h2>Solicitação enviada com sucesso!</h2>
+              <p class="texto-sucesso">
+                Seu agendamento está aguardando aprovação da barbearia. Aguarde a confirmação.
+              </p>
+            </div>
+
+            <div class="sucesso-comprovante">
+              <div class="comprovante-linha">
+                <span>Cliente:</span>
+                <strong id="sucesso-nome"></strong>
+              </div>
+              <div class="comprovante-linha">
+                <span>Celular:</span>
+                <strong id="sucesso-telefone"></strong>
+              </div>
+              <div class="comprovante-linha">
+                <span>Serviço:</span>
+                <strong id="sucesso-servico"></strong>
+              </div>
+              <div class="comprovante-linha">
+                <span>Data:</span>
+                <strong id="sucesso-data" style="color: #f7d584;"></strong>
+              </div>
+              <div class="comprovante-linha">
+                <span>Horário:</span>
+                <strong id="sucesso-horario" style="color: #f7d584;"></strong>
+              </div>
+              <div class="comprovante-linha">
+                <span>Valor:</span>
+                <strong id="sucesso-valor"></strong>
+              </div>
+              <div class="comprovante-linha">
+                <span>Status:</span>
+                <strong id="sucesso-status" style="color: #f7d584; text-transform: uppercase;">PENDENTE</strong>
+              </div>
+              <div class="comprovante-linha">
+                <span>Local:</span>
+                <strong>Rua Emboabas, 819, Santa Rita - Santa Bárbara d'Oeste</strong>
+              </div>
+            </div>
+
+            <div class="sucesso-acoes" style="margin-top: 26px; display: flex; gap: 12px; flex-wrap: wrap;">
+              <button id="btn-novo-agendamento" class="botao" type="button" style="flex: 1; min-width: 190px;">
+                AGENDAR OUTRO HORÁRIO
+              </button>
+              <a href="#servicos" id="btn-ver-servicos" class="botao botao-voltar"
+                style="text-align: center; padding: 13px 20px;">
+                Voltar aos serviços
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sobre" class="secao sobre">
+      <div class="sobre-conteudo">
+        <p class="etiqueta">SOBRE</p>
+        <h2>Rossi Barbershop</h2>
+        <p>Uma barbearia em Santa Rita, Santa Bárbara d’Oeste, onde estilo e elegância se encontram. Cada corte e cada barba são feitos com atenção ao detalhe.</p>
+      </div>
+
+      <div class="sobre-galeria">
+        <div class="sobre-foto-item sobre-foto-esquerda">
+          <img src="img/sobre-2.png" alt="Recepção e estrutura moderna da Rossi Barbershop" class="sobre-foto" loading="lazy" width="597" height="762">
+        </div>
+        <div class="sobre-foto-item sobre-foto-direita">
+          <img src="img/sobre-1.png" alt="Espaço de corte e atendimento na Rossi Barbershop" class="sobre-foto" loading="lazy" width="598" height="742">
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape-principal">
+    <div class="rodape-conteudo">
+      <div class="rodape-coluna">
+        <div class="rodape-marca-linha">
+          <img src="img/logo.jpg" alt="Logo Rossi Barbershop" class="rodape-logo-img" width="30" height="30">
+          <h3 class="rodape-marca">ROSSI BARBERSHOP</h3>
+        </div>
+        <p class="rodape-endereco">
+          <a href="https://www.google.com/maps/place/R.+Emboabas,+819+-+Jardim+Santa+Rita+de+Cassia,+Santa+B%C3%A1rbara+d'Oeste+-+SP,+13457-053/@-22.770014,-47.392411,17z/data=!3m1!4b1!4m6!3m5!1s0x94c89c207f3103c9:0x372347556047ef69!8m2!3d-22.770014!4d-47.392411!16s%2Fg%2F11x7hrj1pm?entry=ttu&g_ep=EgoyMDI2MTAxOS4wIKXMDSoASAFQAw%3D%3D"
+            target="_blank" rel="noopener noreferrer" class="link-endereco" title="Abrir localização no Google Maps">
+            Rua Emboabas, 819, Santa Rita<br>
+            Santa Bárbara d'Oeste, SP
+          </a>
+        </p>
+        <a href="https://www.google.com/maps/place/R.+Emboabas,+819+-+Jardim+Santa+Rita+de+Cassia,+Santa+B%C3%A1rbara+d'Oeste+-+SP,+13457-053/@-22.770014,-47.392411,17z/data=!3m1!4b1!4m6!3m5!1s0x94c89c207f3103c9:0x372347556047ef69!8m2!3d-22.770014!4d-47.392411!16s%2Fg%2F11x7hrj1pm?entry=ttu&g_ep=EgoyMDI2MTAxOS4wIKXMDSoASAFQAw%3D%3D"
+          target="_blank" rel="noopener noreferrer" class="link-maps-acao" title="Abrir no Google Maps">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+          Ver no Google Maps
+        </a>
+        <a href="admin.html" class="link-admin-rodape" style="display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; color: var(--dourado); font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          Acessar Área do Barbeiro
+        </a>
+      </div>
+
+      <div class="rodape-coluna">
+        <span class="rodape-titulo-coluna">CONTATO</span>
+        <ul class="rodape-lista-contato">
+          <li>
+            <strong>Instagram</strong>
+            <a href="https://instagram.com/rossibarbeiro" target="_blank" rel="noopener noreferrer" class="link-social">
+              @rossibarbeiro
+            </a>
+          </li>
+          <li>
+            <strong>WhatsApp</strong>
+            <a href="https://wa.me/5519991125749" target="_blank" rel="noopener noreferrer" class="link-social">
+              (19) 9 9112-5749
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <div class="rodape-coluna">
+        <span class="rodape-titulo-coluna">HORÁRIO</span>
+        <div class="rodape-horarios">
+          <p>Ter a Qui: 08:45 às 12:00 e 13:30 às 19:30</p>
+          <p>Sex: 08:00 às 12:00 e 13:30 às 19:30</p>
+          <p>Sáb: 08:00 às 12:00 e 12:45 às 15:00</p>
+          <p class="tag-fechado-rodape">Dom e Seg: Fechado</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="rodape-divisor"></div>
+
+    <div class="rodape-copyright">
+      <p>© <span id="ano"></span> Rossi Barbershop. Todos os direitos reservados.</p>
+    </div>
+  </footer>
+
+  <!-- Botão Flutuante: Acesso do Barbeiro (ocultado para publicação)
+  <a href="admin.html" class="btn-flutuante-barbeiro" title="Acessar o Painel Administrativo do Barbeiro">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+    </svg>
+    <span>Área do Barbeiro</span>
+  </a>
+  -->
+
+  <!-- Botão Flutuante: Voltar ao Topo / Início -->
+  <button id="btn-voltar-topo" class="btn-voltar-topo" type="button" aria-label="Voltar ao início da página"
+    title="Voltar ao início">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+  </button>
+</body>
+
+</html>

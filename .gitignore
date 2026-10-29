@@ -1,0 +1,36 @@
+# ==========================================
+# Rossi Barbershop - Git Ignore Configuration
+# ==========================================
+
+# 1. Variáveis de Ambiente e Segredos (CRÍTICO)
+.env
+.env.*
+*.env
+backend/.env
+backend/.env.*
+
+# 2. Dependências (nunca devem ir ao repositório)
+node_modules/
+backend/node_modules/
+
+# 3. Pastas de Editores, IDEs e Assistentes
+.vscode/
+.idea/
+.agents/
+.claude/
+.cursor/
+.devin/
+
+# 4. Arquivos de Log e Temporários
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.bak
+
+# 5. Arquivos de Sistema Operacional
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/

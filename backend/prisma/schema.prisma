@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Tabela de Serviços oferecidos pela barbearia
+model Service {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  duracao   Int // Duração em minutos
+  preco     Decimal  @db.Decimal(10, 2)
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+
+  @@map("services")
+}
+
+// Tabela de Clientes cadastrados / deduplicados por telefone
+model Client {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  telefone  String   @unique
+  email     String?
+  notas     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings     Booking[]
+  transactions Transaction[]
+
+  @@map("clients")
+}
+
+// Tabela de Agendamentos dos clientes
+model Booking {
+  id          Int      @id @default(autoincrement())
+  clientName  String
+  clientPhone String
+  date        String // Data no formato YYYY-MM-DD
+  time        String // Horário no formato HH:mm
+  status      String @default("PENDENTE") // PENDENTE, CONFIRMADO, CONCLUÍDO, RECUSADO, CANCELADO
+  observacoes String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  serviceId Int
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  clientId  Int?
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  transactions Transaction[]
+
+  // Restrição de Integridade na Fonte:
+  // O banco de dados PostgreSQL impede reservas simultâneas no mesmo dia e horário
+  @@unique([date, time])
+  @@map("bookings")
+}
+
+// Tabela de Transações Financeiras (Módulo Financeiro Completo da Barbearia)
+model Transaction {
+  id              Int       @id @default(autoincrement())
+  tipo            String    // "RECEITA" | "DESPESA"
+  descricao       String
+  categoria       String    // "Serviços", "Venda de Produtos", "Aluguel", "Energia", "Água", "Internet", "Produtos/Materiais", "Manutenção", "Outras"
+  valor           Decimal   @db.Decimal(10, 2)
+  data            String    // Data de competência / lançamento: YYYY-MM-DD
+  dataVencimento  String?   // Data de vencimento: YYYY-MM-DD
+  dataPagamento   String?   // Data da efetivação do pagamento: YYYY-MM-DD
+  metodoPagamento String?   // "PIX", "CARTAO_CREDITO", "CARTAO_DEBITO", "DINHEIRO", "OUTRO"
+  status          String    @default("PENDENTE") // "PENDENTE", "PAGO", "CANCELADO"
+  observacoes     String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  bookingId Int?
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
+  clientId  Int?
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  @@map("transactions")
+}
