@@ -1,0 +1,264 @@
+{
+	"info": {
+		"_postman_id": "rossi-barbershop-api-qa-collection",
+		"name": "💈 Rossi Barbershop - API QA Test Suite",
+		"description": "Coleção de testes automatizados de API para a plataforma Rossi Barbershop.\n\nCenários Cobertos:\n1. Healthcheck e Disponibilidade\n2. Consulta de Serviços e Slots\n3. Happy Path: Agendamento em horário vago (201 Created)\n4. Cenário Negativo / Overbooking: Tentativa de agendamento duplicado (409 Conflict)\n5. Segurança / RBAC: Bloqueio de rota administrativa sem header x-admin-key (401 Unauthorized)\n6. Gestão Administrativa: Aprovação pelo Barbeiro (200 OK -> CONFIRMADO)\n7. Gestão Administrativa: Recusa pelo Barbeiro com justificativa (200 OK -> RECUSADO)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "01 - Healthcheck da API",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"[QA] Status code é 200 OK\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"[QA] Retorna status ok e mensagem esperada\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.status).to.eql(\"ok\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/health",
+					"host": ["{{baseUrl}}"],
+					"path": ["health"]
+				}
+			}
+		},
+		{
+			"name": "02 - Listar Serviços Ativos",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"[QA] Status code é 200 OK\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"[QA] Lista de serviços contém itens válidos\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.sucesso).to.eql(true);",
+							"    pm.expect(jsonData.dados).to.be.an(\"array\").that.is.not.empty;",
+							"    pm.environment.set(\"service_id\", jsonData.dados[0].id);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/services",
+					"host": ["{{baseUrl}}"],
+					"path": ["services"]
+				}
+			}
+		},
+		{
+			"name": "03 - [Happy Path] Criar Agendamento em Horário Livre",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"[QA] Status code é 201 Created\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"[QA] Agendamento criado com status inicial PENDENTE\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.sucesso).to.eql(true);",
+							"    pm.expect(jsonData.dados).to.have.property(\"id\");",
+							"    pm.expect(jsonData.dados.status).to.eql(\"PENDENTE\");",
+							"    pm.environment.set(\"created_booking_id\", jsonData.dados.id);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceId\": 1,\n    \"date\": \"{{testDate}}\",\n    \"time\": \"{{testTime}}\",\n    \"clientName\": \"Carlos Alberto QA\",\n    \"clientPhone\": \"(19) 99876-5432\",\n    \"observacoes\": \"Agendamento criado via teste automatizado\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/bookings",
+					"host": ["{{baseUrl}}"],
+					"path": ["bookings"]
+				}
+			}
+		},
+		{
+			"name": "04 - [Overbooking] Tentar Agendamento Duplicado (Deve Falhar 409)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"[QA] Status code é 409 Conflict (Overbooking impedido)\", function () {",
+							"    pm.response.to.have.status(409);",
+							"});",
+							"",
+							"pm.test(\"[QA] Resposta indica conflito de horário\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.sucesso).to.eql(false);",
+							"    pm.expect(jsonData.mensagem).to.match(/conflita com outro atendimento|reservado por outro cliente/i);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"serviceId\": 1,\n    \"date\": \"{{testDate}}\",\n    \"time\": \"{{testTime}}\",\n    \"clientName\": \"Outro Cliente Tentando o Mesmo Horario\",\n    \"clientPhone\": \"(19) 98765-4321\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/bookings",
+					"host": ["{{baseUrl}}"],
+					"path": ["bookings"]
+				}
+			}
+		},
+		{
+			"name": "05 - [Segurança] Tentar Aprovar Sem Autenticação (Deve Falhar 401)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"[QA] Status code é 401 Unauthorized\", function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"pm.test(\"[QA] Resposta indica falta de autorização\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.sucesso).to.eql(false);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/bookings/{{created_booking_id}}/approve",
+					"host": ["{{baseUrl}}"],
+					"path": ["bookings", "{{created_booking_id}}", "approve"]
+				}
+			}
+		},
+		{
+			"name": "06 - [Admin] Aprovar Agendamento com Chave Válida",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"[QA] Status code é 200 OK\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"[QA] Status do agendamento atualizado para CONFIRMADO\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.sucesso).to.eql(true);",
+							"    pm.expect(jsonData.dados.status).to.eql(\"CONFIRMADO\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "x-admin-key",
+						"value": "{{adminKey}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/bookings/{{created_booking_id}}/approve",
+					"host": ["{{baseUrl}}"],
+					"path": ["bookings", "{{created_booking_id}}", "approve"]
+				}
+			}
+		},
+		{
+			"name": "07 - [Admin] Recusar Agendamento com Justificativa",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"[QA] Status code é 200 OK\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"[QA] Status do agendamento atualizado para RECUSADO e horário liberado\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.sucesso).to.eql(true);",
+							"    pm.expect(jsonData.dados.status).to.eql(\"RECUSADO\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "x-admin-key",
+						"value": "{{adminKey}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"motivo\": \"Horário bloqueado para manutenção técnica da barbearia\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/bookings/{{created_booking_id}}/reject",
+					"host": ["{{baseUrl}}"],
+					"path": ["bookings", "{{created_booking_id}}", "reject"]
+				}
+			}
+		}
+	]
+}
