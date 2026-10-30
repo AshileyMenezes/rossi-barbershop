@@ -12,8 +12,8 @@ O **Rossi Barbershop** é uma solução completa desenvolvida para automatizar e
 
 * **Agendamento em 3 etapas simples:** Escolha do serviço, seleção de data no calendário e escolha de horário livre.
 * **Prevenção de Overbooking:** Restrição exclusiva no banco de dados que impede agendamentos duplicados no mesmo dia e horário.
-* **Confirmação via WhatsApp:** Gera automaticamente mensagem formatada com os detalhes do agendamento para contato direto com o barbeiro.
-* **Painel Administrativo Interno:** Gestão de agendamentos (confirmar, recusar, concluir), base de clientes e controle de fluxo financeiro (receitas e despesas).
+* **Confirmação via WhatsApp:** Gera automaticamente mensagem formatada com os detalhes do agendamento para contato direto com o barbeiro - Em desenvolvimento.
+* **Painel Administrativo Interno:** Gestão de agendamentos (confirmar, recusar, concluir), base de clientes e controle de fluxo financeiro (receitas e despesas) - Em desenvolvimento.
 
 ---
 
