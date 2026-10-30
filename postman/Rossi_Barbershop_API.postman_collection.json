@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "rossi-barbershop-api-qa-collection",
-		"name": "💈 Rossi Barbershop - API QA Test Suite",
-		"description": "Coleção de testes automatizados de API para a plataforma Rossi Barbershop.\n\nCenários Cobertos:\n1. Healthcheck e Disponibilidade\n2. Consulta de Serviços e Slots\n3. Happy Path: Agendamento em horário vago (201 Created)\n4. Cenário Negativo / Overbooking: Tentativa de agendamento duplicado (409 Conflict)\n5. Segurança / RBAC: Bloqueio de rota administrativa sem header x-admin-key (401 Unauthorized)\n6. Gestão Administrativa: Aprovação pelo Barbeiro (200 OK -> CONFIRMADO)\n7. Gestão Administrativa: Recusa pelo Barbeiro com justificativa (200 OK -> RECUSADO)",
+		"name": "💈 Rossi Barbershop - API QA & Security Test Suite",
+		"description": "Coleção de testes automatizados de API e Segurança para a plataforma Rossi Barbershop.\n\nCenários Cobertos:\n1. Healthcheck e Disponibilidade\n2. Consulta de Serviços e Slots\n3. Happy Path: Agendamento em horário vago (201 Created)\n4. Cenário Negativo / Overbooking: Tentativa de agendamento duplicado (409 Conflict)\n5. Segurança / RBAC: Bloqueio de rota administrativa sem header (401 Unauthorized)\n6. Autenticação Administrativa: Login gera token de sessão temporário (200 OK)\n7. Gestão Administrativa: Aprovação pelo Barbeiro com token de sessão (200 OK -> CONFIRMADO)\n8. Gestão Administrativa: Recusa pelo Barbeiro com justificativa (200 OK -> RECUSADO)\n9. Proteção de Dados: Acesso ao módulo financeiro protegido (200 OK com token)\n10. Logout & Revogação: Invalidação imediata da sessão no servidor (200 OK)\n11. Pós-Logout: Tentativa de reuso de token revogado (401 Unauthorized)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -181,7 +181,49 @@
 			}
 		},
 		{
-			"name": "06 - [Admin] Aprovar Agendamento com Chave Válida",
+			"name": "06 - [Segurança] Login Administrativo (Gera Token Temporário)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"[QA] Login realizado com sucesso (200 OK)\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"[QA] Retorna token temporário seguro assinado\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.sucesso).to.eql(true);",
+							"    pm.expect(jsonData.token).to.be.a('string');",
+							"    pm.expect(jsonData.token).to.match(/^rossi_/);",
+							"    pm.environment.set(\"sessionToken\", jsonData.token);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"chaveAcesso\": \"{{adminKey}}\"\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/admin/login",
+					"host": ["{{baseUrl}}"],
+					"path": ["admin", "login"]
+				}
+			}
+		},
+		{
+			"name": "07 - [Admin] Aprovar Agendamento com Token Temporário",
 			"event": [
 				{
 					"listen": "test",
@@ -205,8 +247,8 @@
 				"method": "PATCH",
 				"header": [
 					{
-						"key": "x-admin-key",
-						"value": "{{adminKey}}"
+						"key": "Authorization",
+						"value": "Bearer {{sessionToken}}"
 					}
 				],
 				"url": {
@@ -217,7 +259,7 @@
 			}
 		},
 		{
-			"name": "07 - [Admin] Recusar Agendamento com Justificativa",
+			"name": "08 - [Admin] Recusar Agendamento com Justificativa",
 			"event": [
 				{
 					"listen": "test",
@@ -227,7 +269,7 @@
 							"    pm.response.to.have.status(200);",
 							"});",
 							"",
-							"pm.test(\"[QA] Status do agendamento atualizado para RECUSADO e horário liberado\", function () {",
+							"pm.test(\"[QA] Status do agendamento atualizado para RECUSADO\", function () {",
 							"    var jsonData = pm.response.json();",
 							"    pm.expect(jsonData.sucesso).to.eql(true);",
 							"    pm.expect(jsonData.dados.status).to.eql(\"RECUSADO\");",
@@ -245,8 +287,8 @@
 						"value": "application/json"
 					},
 					{
-						"key": "x-admin-key",
-						"value": "{{adminKey}}"
+						"key": "Authorization",
+						"value": "Bearer {{sessionToken}}"
 					}
 				],
 				"body": {
@@ -257,6 +299,107 @@
 					"raw": "{{baseUrl}}/bookings/{{created_booking_id}}/reject",
 					"host": ["{{baseUrl}}"],
 					"path": ["bookings", "{{created_booking_id}}", "reject"]
+				}
+			}
+		},
+		{
+			"name": "09 - [Segurança: Dados Financeiros] Consulta Resumo Financeiro com Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"[QA] Status code é 200 OK para rota financeira autenticada\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"[QA] Retorna indicadores consolidados\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.sucesso).to.eql(true);",
+							"    pm.expect(jsonData.dados).to.have.property(\"lucroLiquido\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{sessionToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/financial/summary",
+					"host": ["{{baseUrl}}"],
+					"path": ["financial", "summary"]
+				}
+			}
+		},
+		{
+			"name": "10 - [Segurança: Logout] Encerrar Sessão e Revogar Token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"[QA] Logout efetuado com sucesso (200 OK)\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{sessionToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/admin/logout",
+					"host": ["{{baseUrl}}"],
+					"path": ["admin", "logout"]
+				}
+			}
+		},
+		{
+			"name": "11 - [Segurança: Revogação] Tentar Reuso de Token Após Logout (Deve Falhar 401)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"[QA] Token revogado rejeitado com sucesso (401 Unauthorized)\", function () {",
+							"    pm.response.to.have.status(401);",
+							"});",
+							"",
+							"pm.test(\"[QA] Mensagem confirma sessão encerrada\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.mensagem).to.match(/logout|revogado|encerrada/i);",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{sessionToken}}"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/admin/verify",
+					"host": ["{{baseUrl}}"],
+					"path": ["admin", "verify"]
 				}
 			}
 		}

@@ -3,12 +3,13 @@ const router = express.Router();
 const adminController = require("../controllers/admin.controller");
 const { authAdmin } = require("../middlewares/auth.middleware");
 
-// Rota pública: Login com chave de acesso administrativa
+// Rota pública: Login com rate limiting e geração de token temporário
 router.post("/login", adminController.login);
 
-// Rota protegida: Verifica se o token/chave atual é válido
+// Rotas protegidas: Verificação de sessão e logout
 router.get("/verify", authAdmin, adminController.verifyAuth);
 router.get("/me", authAdmin, adminController.verifyAuth);
+router.post("/logout", authAdmin, adminController.logout);
 
 // Rota protegida: Dados completos dos indicadores do dashboard
 router.get("/dashboard", authAdmin, adminController.getDashboard);

@@ -53,6 +53,17 @@
     return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   }
 
+  // Função utilitária estrita para sanitização contra injeções XSS (Cross-Site Scripting)
+  function escapeHtml(str) {
+    if (str === null || str === undefined) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
+
   // Utilitário de formatação de data e hora
   function formatarDataHora(dataString, horarioString) {
     if (!dataString) return "-";
@@ -108,7 +119,8 @@
           }
         })
         .catch(() => {
-          exibirPainel();
+          // Bloqueio rigoroso: falhas de rede ou de verificação NUNCA abrem o painel
+          exibirLogin();
         });
     } else {
       exibirLogin();
@@ -120,6 +132,10 @@
     document.getElementById("painel-principal").hidden = true;
     state.token = "";
     sessionStorage.removeItem("rossi_admin_token");
+    state.dadosDashboard = null;
+    state.dadosAgendamentos = [];
+    state.dadosClientes = [];
+    state.dadosFinanceiro = null;
   }
 
   function exibirPainel() {
@@ -172,11 +188,19 @@
       });
     }
 
-    // Logout
+    // Logout com revogação no servidor
     const btnLogout = document.getElementById("btn-logout");
     if (btnLogout) {
-      btnLogout.addEventListener("click", () => {
+      btnLogout.addEventListener("click", async () => {
         if (confirm("Deseja realmente sair da Área do Barbeiro?")) {
+          try {
+            await fetch(`${API_BASE}/admin/logout`, {
+              method: "POST",
+              headers: getHeaders()
+            });
+          } catch (e) {
+            console.warn("Falha ao comunicar logout ao servidor:", e);
+          }
           exibirLogin();
         }
       });
@@ -482,12 +506,15 @@
     }
 
     container.innerHTML = pendentes.map(item => {
-      const nomeCliente = item.cliente || item.clienteNome || "Cliente";
-      const telCliente = item.telefone || item.clienteTelefone || "";
-      const nomeServico = item.servico || item.servicoNome || (item.service && item.service.nome) || "Corte";
-      const duracao = item.duracao || item.duracaoMinutos || 30;
+      const nomeCliente = escapeHtml(item.cliente || item.clienteNome || "Cliente");
+      const telCliente = escapeHtml(item.telefone || item.clienteTelefone || "");
+      const nomeServico = escapeHtml(item.servico || item.servicoNome || (item.service && item.service.nome) || "Corte");
+      const duracao = Number(item.duracao || item.duracaoMinutos || 30);
       const preco = item.preco || (item.service && item.service.preco) || 0;
-      const dataHoraFmt = item.horario ? formatarDataHora(item.data, item.horario) : formatarDataHora(item.dataHora);
+      const dataHoraFmt = escapeHtml(item.horario ? formatarDataHora(item.data, item.horario) : formatarDataHora(item.dataHora));
+      const obsSafe = item.observacoes ? escapeHtml(item.observacoes) : "";
+      const itemId = Number(item.id);
+      const telLimpo = encodeURIComponent(limparTelefone(telCliente));
 
       return `
         <div class="card-pendente-item">
@@ -495,7 +522,7 @@
             <div>
               <div class="card-pendente-cliente">${nomeCliente}</div>
               <div class="card-pendente-tel">
-                <a href="https://wa.me/55${limparTelefone(telCliente)}" target="_blank" rel="noopener" class="link-wpp">
+                <a href="https://wa.me/55${telLimpo}" target="_blank" rel="noopener" class="link-wpp">
                   📱 ${telCliente}
                 </a>
               </div>
@@ -508,13 +535,13 @@
             <strong class="texto-ouro">${formatarMoeda(preco)}</strong>
           </div>
 
-          ${item.observacoes ? `<small class="texto-apagado">Obs: ${item.observacoes}</small>` : ""}
+          ${obsSafe ? `<small class="texto-apagado">Obs: ${obsSafe}</small>` : ""}
 
           <div class="card-pendente-acoes">
-            <button class="botao botao-ouro w-100" onclick="decidirAgendamento(${item.id}, 'approve')">
+            <button class="botao botao-ouro w-100" onclick="decidirAgendamento(${itemId}, 'approve')">
               ✓ Aprovar Agendamento
             </button>
-            <button class="btn-perigo w-100" onclick="decidirAgendamento(${item.id}, 'reject')">
+            <button class="btn-perigo w-100" onclick="decidirAgendamento(${itemId}, 'reject')">
               ✕ Recusar
             </button>
           </div>
@@ -533,11 +560,12 @@
     }
 
     container.innerHTML = atendimentos.map(item => {
-      const nomeCliente = item.cliente || item.clienteNome || "Cliente";
-      const nomeServico = item.servico || item.servicoNome || (item.service && item.service.nome) || "Serviço";
-      const duracao = item.duracao || item.duracaoMinutos || 30;
+      const nomeCliente = escapeHtml(item.cliente || item.clienteNome || "Cliente");
+      const nomeServico = escapeHtml(item.servico || item.servicoNome || (item.service && item.service.nome) || "Serviço");
+      const duracao = Number(item.duracao || item.duracaoMinutos || 30);
       const preco = item.preco || (item.service && item.service.preco) || 0;
-      const dataHoraFmt = item.horario ? formatarDataHora(item.data, item.horario) : formatarDataHora(item.dataHora);
+      const dataHoraFmt = escapeHtml(item.horario ? formatarDataHora(item.data, item.horario) : formatarDataHora(item.dataHora));
+      const itemId = Number(item.id);
 
       return `
         <div class="lista-simples-item">
@@ -548,7 +576,7 @@
           <div style="text-align: right;">
             <strong class="texto-ouro">${formatarMoeda(preco)}</strong>
             <div>
-              <button class="btn-sucesso" style="margin-top: 4px; padding: 4px 8px; font-size: 11px;" onclick="abrirModalPagamento(${item.id})">
+              <button class="btn-sucesso" style="margin-top: 4px; padding: 4px 8px; font-size: 11px;" onclick="abrirModalPagamento(${itemId})">
                 Concluir & Pagto
               </button>
             </div>
@@ -571,18 +599,22 @@
       const isReceita = t.tipo === "RECEITA";
       const corTexto = isReceita ? "texto-ouro" : "texto-vermelho";
       const prefixo = isReceita ? "+" : "-";
-      const dataFmt = formatarData(t.data || t.dataCompetencia);
+      const dataFmt = escapeHtml(formatarData(t.data || t.dataCompetencia));
+      const descSafe = escapeHtml(t.descricao);
+      const catSafe = escapeHtml(t.categoria);
+      const metodoSafe = escapeHtml(t.metodoPagamento || "PIX");
+      const statusSafe = escapeHtml(t.status);
 
       return `
         <div class="lista-simples-item">
           <div>
-            <strong>${t.descricao}</strong>
-            <div class="texto-apagado">${dataFmt} • ${t.categoria} • ${t.metodoPagamento || "PIX"}</div>
+            <strong>${descSafe}</strong>
+            <div class="texto-apagado">${dataFmt} • ${catSafe} • ${metodoSafe}</div>
           </div>
           <div style="text-align: right;">
             <strong class="${corTexto}">${prefixo} ${formatarMoeda(t.valor)}</strong>
             <div>
-              <span class="badge-status badge-${t.status}" style="font-size: 10px; padding: 2px 6px;">${t.status}</span>
+              <span class="badge-status badge-${statusSafe}" style="font-size: 10px; padding: 2px 6px;">${statusSafe}</span>
             </div>
           </div>
         </div>
@@ -657,22 +689,24 @@
     if (vazio) vazio.hidden = true;
 
     tbody.innerHTML = agendamentos.map(item => {
-      const nomeCliente = item.cliente || item.clienteNome || "Cliente";
-      const telCliente = item.telefone || item.clienteTelefone || "";
-      const nomeServico = item.servicoNome || item.servico || (item.service && item.service.nome) || "Serviço";
-      const duracao = item.duracao || item.duracaoMinutos || 30;
+      const nomeCliente = escapeHtml(item.cliente || item.clienteNome || "Cliente");
+      const telCliente = escapeHtml(item.telefone || item.clienteTelefone || "");
+      const nomeServico = escapeHtml(item.servicoNome || item.servico || (item.service && item.service.nome) || "Serviço");
+      const duracao = Number(item.duracao || item.duracaoMinutos || 30);
       const preco = item.preco || (item.service && item.service.preco) || 0;
-      const dataHoraFmt = item.horario ? formatarDataHora(item.data, item.horario) : formatarDataHora(item.dataHora);
+      const dataHoraFmt = escapeHtml(item.horario ? formatarDataHora(item.data, item.horario) : formatarDataHora(item.dataHora));
 
-      const statusBadge = `<span class="badge-status badge-${item.status}">${item.status}</span>`;
-      const telLimpo = limparTelefone(telCliente);
+      const statusSafe = escapeHtml(item.status);
+      const statusBadge = `<span class="badge-status badge-${statusSafe}">${statusSafe}</span>`;
+      const telLimpo = encodeURIComponent(limparTelefone(telCliente));
       const linkWpp = `<a href="https://wa.me/55${telLimpo}" target="_blank" rel="noopener" style="color: var(--verde); font-weight: 600;">📱 ${telCliente}</a>`;
+      const itemId = Number(item.id);
 
       let acoesHtml = "";
       if (item.status === "PENDENTE") {
         acoesHtml = `
-          <button class="btn-sucesso" onclick="decidirAgendamento(${item.id}, 'approve')">Aprovar</button>
-          <button class="btn-perigo" onclick="decidirAgendamento(${item.id}, 'reject')">Recusar</button>
+          <button class="btn-sucesso" onclick="decidirAgendamento(${itemId}, 'approve')">Aprovar</button>
+          <button class="btn-perigo" onclick="decidirAgendamento(${itemId}, 'reject')">Recusar</button>
         `;
       } else if (item.status === "CONFIRMADO") {
         acoesHtml = `
@@ -1034,22 +1068,26 @@
     if (vazio) vazio.hidden = true;
 
     tbody.innerHTML = clientes.map(c => {
-      const telLimpo = limparTelefone(c.telefone);
+      const telLimpo = encodeURIComponent(limparTelefone(c.telefone));
       const concluidos = c.totalConcluidos ?? c.agendamentosConcluidos ?? 0;
+      const nomeSafe = escapeHtml(c.nome);
+      const telSafe = escapeHtml(c.telefone);
+      const cid = Number(c.id);
+
       return `
         <tr>
-          <td><strong>${c.nome}</strong></td>
+          <td><strong>${nomeSafe}</strong></td>
           <td>
             <a href="https://wa.me/55${telLimpo}" target="_blank" rel="noopener" style="color: var(--verde); font-weight: 600;">
-              📱 ${c.telefone}
+              📱 ${telSafe}
             </a>
           </td>
-          <td>${c.totalAgendamentos || 0}</td>
-          <td><strong class="texto-verde">${concluidos}</strong></td>
+          <td>${Number(c.totalAgendamentos || 0)}</td>
+          <td><strong class="texto-verde">${Number(concluidos)}</strong></td>
           <td><strong class="texto-ouro">${formatarMoeda(c.totalGasto || 0)}</strong></td>
-          <td>${c.ultimoAtendimento ? formatarDataHora(c.ultimoAtendimento) : "-"}</td>
+          <td>${c.ultimoAtendimento ? escapeHtml(formatarDataHora(c.ultimoAtendimento)) : "-"}</td>
           <td>
-            <button class="btn-secundario" onclick="abrirDetalhesCliente(${c.id})">
+            <button class="btn-secundario" onclick="abrirDetalhesCliente(${cid})">
               Ver Histórico Completo
             </button>
           </td>
@@ -1079,11 +1117,12 @@
       const tbody = document.getElementById("tbody-cliente-historico");
       if (tbody) {
         tbody.innerHTML = (c.bookings || c.agendamentos || []).map(b => {
-          const servNome = b.servicoNome || b.servico || (b.service && b.service.nome) || "Serviço";
+          const servNome = escapeHtml(b.servicoNome || b.servico || (b.service && b.service.nome) || "Serviço");
           const prc = b.preco || (b.service && b.service.preco) || 0;
           const pago = b.financeiro ? b.financeiro.totalPago : (b.totalPago || 0);
-          const dataFmt = b.data ? formatarData(b.data) : formatarData(b.dataHora);
-          const horaFmt = b.horario ? b.horario : new Date(b.dataHora).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+          const dataFmt = escapeHtml(b.data ? formatarData(b.data) : formatarData(b.dataHora));
+          const horaFmt = escapeHtml(b.horario ? b.horario : new Date(b.dataHora).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
+          const statusSafe = escapeHtml(b.status);
 
           return `
             <tr>
@@ -1091,7 +1130,7 @@
               <td>${horaFmt}</td>
               <td>${servNome}</td>
               <td><strong>${formatarMoeda(prc)}</strong></td>
-              <td><span class="badge-status badge-${b.status}">${b.status}</span></td>
+              <td><span class="badge-status badge-${statusSafe}">${statusSafe}</span></td>
               <td>${pago ? `<strong class="texto-verde">${formatarMoeda(pago)}</strong>` : `<span class="texto-apagado">R$ 0,00</span>`}</td>
             </tr>
           `;
@@ -1268,23 +1307,29 @@
       const isReceita = t.tipo === "RECEITA";
       const corTexto = isReceita ? "texto-ouro" : "texto-vermelho";
       const prefixo = isReceita ? "+" : "-";
+      const tid = Number(t.id);
 
       let acaoStatus = "";
       if (t.status === "PENDENTE") {
-        acaoStatus = `<button class="btn-sucesso" style="font-size: 11px; padding: 3px 8px;" onclick="marcarTransacaoPaga(${t.id})">Marcar Pago</button>`;
+        acaoStatus = `<button class="btn-sucesso" style="font-size: 11px; padding: 3px 8px;" onclick="marcarTransacaoPaga(${tid})">Marcar Pago</button>`;
       } else {
         acaoStatus = `<span class="texto-apagado">-</span>`;
       }
 
+      const descSafe = escapeHtml(t.descricao);
+      const catSafe = escapeHtml(t.categoria);
+      const metodoSafe = escapeHtml(t.metodoPagamento || "PIX");
+      const statusSafe = escapeHtml(t.status);
+
       return `
         <tr>
-          <td>${formatarData(t.data || t.dataCompetencia)}</td>
-          <td><span class="badge-status ${isReceita ? 'badge-CONFIRMADO' : 'badge-CANCELADO'}">${t.tipo}</span></td>
-          <td><strong>${t.descricao}</strong></td>
-          <td>${t.categoria}</td>
-          <td>${t.metodoPagamento || "PIX"}</td>
+          <td>${escapeHtml(formatarData(t.data || t.dataCompetencia))}</td>
+          <td><span class="badge-status ${isReceita ? 'badge-CONFIRMADO' : 'badge-CANCELADO'}">${escapeHtml(t.tipo)}</span></td>
+          <td><strong>${descSafe}</strong></td>
+          <td>${catSafe}</td>
+          <td>${metodoSafe}</td>
           <td><strong class="${corTexto}">${prefixo} ${formatarMoeda(t.valor)}</strong></td>
-          <td><span class="badge-status badge-${t.status}">${t.status}</span></td>
+          <td><span class="badge-status badge-${statusSafe}">${statusSafe}</span></td>
           <td>${acaoStatus}</td>
         </tr>
       `;
